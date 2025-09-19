@@ -1,0 +1,199 @@
+-- Simple GUI Menu + ESP Egg (Common Egg Pets)
+-- Place this LocalScript inside StarterGui
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+-- 🥚 Egg Folder
+local EggFolder = Workspace:WaitForChild("GardenEggs")
+
+-- 🐾 Pets inside Common Egg (from picture)
+local CommonEggPets = {
+	"Golden Lab",
+	"Dog",
+	"Bunny"
+}
+
+-- ESP storage
+local activeESP = {}
+
+-- Utility: Create BillboardGui above egg
+local function createESP(egg, petNames)
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "EggESP"
+	billboard.Adornee = egg
+	billboard.Size = UDim2.new(0, 200, 0, 100) 
+	billboard.StudsOffset = Vector3.new(0, 4, 0)
+	billboard.AlwaysOnTop = true
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.fromRGB(255, 255, 0)
+	label.TextStrokeTransparency = 0
+	label.Font = Enum.Font.SourceSansBold
+	label.TextScaled = true
+	label.TextWrapped = true
+	label.Text = petNames
+
+	label.Parent = billboard
+	billboard.Parent = egg
+
+	activeESP[egg] = billboard
+end
+
+-- Remove ESPs
+local function clearESP()
+	for _, gui in pairs(activeESP) do
+		if gui then gui:Destroy() end
+	end
+	activeESP = {}
+end
+
+-- Toggle ESP Egg
+local function toggleEspEgg(state)
+	clearESP()
+	if state and EggFolder then
+		for _, egg in pairs(EggFolder:GetChildren()) do
+			if egg.Name == "Common Egg" then
+				local petList = table.concat(CommonEggPets, " | ")
+				local base = egg:FindFirstChildWhichIsA("BasePart") or egg
+				createESP(base, petList)
+			end
+		end
+	end
+end
+
+-- ================= GUI MENU ================= --
+
+-- Clear old GUIs (if respawned)
+if PlayerGui:FindFirstChild("CustomMenu") then
+	PlayerGui.CustomMenu:Destroy()
+end
+
+-- UI objects
+local ScreenGui = Instance.new("ScreenGui")
+local Frame = Instance.new("Frame")
+local ToggleButton = Instance.new("TextButton")
+local CloseButton = Instance.new("TextButton")
+local Title = Instance.new("TextLabel")
+local ButtonHolder = Instance.new("ScrollingFrame")
+local Layout = Instance.new("UIListLayout")
+local Padding = Instance.new("UIPadding")
+
+-- ScreenGui setup
+ScreenGui.Name = "CustomMenu"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+-- Menu Frame
+Frame.Parent = ScreenGui
+Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Frame.Position = UDim2.new(0.05, 0, 0.2, 0)
+Frame.Size = UDim2.new(0, 200, 0, 260)
+Frame.Visible = true
+
+-- Title
+Title.Parent = Frame
+Title.Size = UDim2.new(1, -40, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Title.Text = "Menu"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 20
+
+-- Close Button
+CloseButton.Parent = Frame
+CloseButton.Size = UDim2.new(0, 40, 0, 40)
+CloseButton.Position = UDim2.new(1, -40, 0, 0)
+CloseButton.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.TextSize = 20
+
+CloseButton.MouseButton1Click:Connect(function()
+	Frame.Visible = false
+end)
+
+-- ButtonHolder
+ButtonHolder.Parent = Frame
+ButtonHolder.BackgroundTransparency = 1
+ButtonHolder.Size = UDim2.new(1, 0, 1, -40)
+ButtonHolder.Position = UDim2.new(0, 0, 0, 40)
+ButtonHolder.ScrollBarThickness = 6
+ButtonHolder.CanvasSize = UDim2.new(0, 0, 0, 0)
+ButtonHolder.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+-- Layout + Padding
+Layout.Parent = ButtonHolder
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Padding = UDim.new(0, 5)
+
+Padding.Parent = ButtonHolder
+Padding.PaddingLeft = UDim.new(0, 5)
+Padding.PaddingRight = UDim.new(0, 5)
+Padding.PaddingTop = UDim.new(0, 5)
+
+-- Toggle Menu Button
+ToggleButton.Parent = ScreenGui
+ToggleButton.Size = UDim2.new(0, 80, 0, 40)
+ToggleButton.Position = UDim2.new(0, 10, 0, 10)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+ToggleButton.Text = "Menu"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Font = Enum.Font.SourceSansBold
+ToggleButton.TextSize = 18
+
+ToggleButton.MouseButton1Click:Connect(function()
+	Frame.Visible = not Frame.Visible
+end)
+
+-- Function to create buttons
+local function createButton(name, text, order, callback)
+	local btn = Instance.new("TextButton")
+	btn.Name = name
+	btn.Parent = ButtonHolder
+	btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+	btn.Size = UDim2.new(1, -10, 0, 40)
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.SourceSansBold
+	btn.TextSize = 18
+	btn.Text = text
+	btn.LayoutOrder = order
+
+	local toggled = false
+	btn.MouseButton1Click:Connect(function()
+		toggled = not toggled
+		btn.BackgroundColor3 = toggled and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+
+		local ok, err = pcall(callback, btn, toggled)
+		if not ok then
+			warn("Button error:", name, err)
+		end
+	end)
+
+	return btn
+end
+
+-- ================= BUTTONS ================= --
+
+-- ESP Egg Button
+createButton("EspEgg", "ESP Egg", 1, function(btn, state)
+	toggleEspEgg(state)
+end)
+
+-- Example Extra Buttons
+createButton("EggRandomizer", "Egg Randomizer", 2, function(btn, state)
+	print("Egg Randomizer:", state)
+end)
+
+createButton("GameFps", "Game FPS", 3, function(btn, state)
+	print("Game FPS:", state)
+end)
+
+createButton("DupeItem", "Dupe Item", 4, function(btn, state)
+	print("Dupe Item:", state)
+end)
